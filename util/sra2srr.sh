@@ -1,0 +1,1 @@
+/home/rnz/src/git/bioinfo-utils/sra2srr.sh

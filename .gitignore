@@ -1,0 +1,12 @@
+.drake
+drake.*
+__*
+
+*.aux
+*.bbl
+*.blg
+*.fls
+*.log
+*.out
+*.pdf
+*.fdb_latexmk
