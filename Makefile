@@ -11,8 +11,7 @@ RNASEQ_TABLE=${RNASEQ_DIR}/RNA-seq_sra.tab
 
 
 
-${D_EXP} ${D_SAM} ${D_STD} ${D_ATR} : ${D_XML}
-	mkdir -p ${DATA_DIR}
+${D_EXP} ${D_SAM} ${D_STD} ${D_ATR} : ${D_XML} ${DATA_DIR}
 	bash util/prepare-data.sh \
 		-e ${D_EXP} \
 		-s ${D_SAM} \
@@ -21,9 +20,11 @@ ${D_EXP} ${D_SAM} ${D_STD} ${D_ATR} : ${D_XML}
 		-x ${D_XML} \
 		-r ${RNASEQ_DIR}
 
-${D_XML}:
-	mkdir -p ${D_XML}
+${D_XML}: ${DATA_DIR}
 	bash util/retrieve-metadata.sh ${D_XML}	
+
+${DATA_DIR}:
+	mkdir -p ${DATA_DIR}
 
 .PHONY: clean
 clean:
