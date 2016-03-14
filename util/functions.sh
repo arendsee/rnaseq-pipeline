@@ -57,7 +57,7 @@ get-latest-metadata-url (){
 fetch-metadata (){
     url=$1
     name=$2
-    wget -o ${name}.tar.gz "$url"
+    curl -o ${name}.tar.gz "$url"
     if [ $? -ne 0 ]; then
         echo "Failed to open '$url'" >&2
         exit 1
@@ -166,21 +166,4 @@ from-sample-extract-attributes (){
             $1 == "___" {file=$2; id=$3}
             $1 != "___" {print file, id, $0}
         '
-}
-
-extract-rnaseq-data (){
-    rnaseq_dir=$1
-    d_exp=$2
-    d_sam=$3
-    d_std=$4
-    [[ -d $rnaseq_dir ]] || mkdir $rnaseq_dir
-    for f in $d_exp $d_sam $d_std
-    do
-        out=$rnaseq_dir/`basename $f`
-        head -1 $f > $out
-        join -t $'\t' \
-            <(awk -F"\t" '$6 == "RNA-Seq" {print $1}' $d_exp | sort -u) \
-            <(sort $f) >> $out &
-    done
-    wait
 }

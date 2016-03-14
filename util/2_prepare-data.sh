@@ -29,7 +29,7 @@ while getopts "he:s:d:a:x:r:" opt; do
     esac 
 done
 
-source util/functions.sh
+source functions.sh
 
 [[ -d ${rna} ]] || mkdir ${rna}
 
