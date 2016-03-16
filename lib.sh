@@ -121,8 +121,6 @@ extract-experiment (){
             -m '/EXPERIMENT_SET/EXPERIMENT' \
                 -v 'IDENTIFIERS/PRIMARY_ID' \
                 -o $'\t' \
-                -v 'DESIGN/SAMPLE_DESCRIPTOR/IDENTIFIERS/PRIMARY_ID' \
-                -o $'\t' \
                 -v 'DESIGN/DESIGN_DESCRIPTION' \
                 -o $'\t' \
                 -v 'DESIGN/LIBRARY_DESCRIPTOR/LIBRARY_NAME' \

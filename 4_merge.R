@@ -19,12 +19,18 @@ fields <- list(
     'species'),
   experiment = c(
     'experiment_id',
-    'sample_id',
     'design_description',
     'library_name',
     'library_strategy',
     'library_source',
-    'instrument_model')
+    'instrument_model'),
+  ids = c(
+    'experiment_id',
+    'sample_id',
+    'study_id',
+    'biosample',
+    'bioproject',
+    'submission_id')
 )
 
 suppressPackageStartupMessages(library("argparse"))
@@ -39,9 +45,14 @@ parser$add_argument(
   default=FALSE)
 
 parser$add_argument(
+  '-i' , '--taxids',
+  help='Taxon ids to extract in the final output'
+)
+
+parser$add_argument(
   'files',
-  help='study.tab, sample.tab, and experiment.tab files.',
-  nargs=3
+  help='study.tab, sample.tab, experiment.tab, and an idmap',
+  nargs=4
 )
 
 args <- parser$parse_args()
@@ -51,7 +62,15 @@ if(args$version){
   q()
 }
 
+  # TODO - delete
+  files <- list(
+    study='study.tab',
+    sample='sample.tab',
+    experiment='experiment.tab',
+    ids='rnaseq-id-map'
+  )
 files <- args$files
+
 
 # # For debugging
 # files=list('study.tab', 'sample.tab', 'experiment.tab')
@@ -65,7 +84,7 @@ if(any(lapply(files, file.access, mode=4) != 0)){
 f <- files %>%
   lapply(read.delim, quote='') %>%
   lapply(as.data.table)
-names(f) <- c('study', 'sample', 'experiment')
+names(f) <- c('study', 'sample', 'experiment', 'ids')
 
 
 for(i in 1:length(f)){
@@ -81,11 +100,10 @@ for(i in 1:length(f)){
   }
 }
 
-# TODO SRA_id are no longer used, merge on experimental id. At step 3 merge in experimental ids.
-d <- merge(f$study, f$sample, by="SRA_id", all=TRUE) %>%
-  merge(f$experiment, by="sample_id", all=TRUE)
+d  <- merge(f$ids, f$experiment, by="experiment_id", all=TRUE) %>%
+d2 <- merge(d, f$sample, by="sample_id", all=TRUE)
+d3 <- merge(d2, f$study, by="study_id", all=TRUE)
 
-d[, .(sample_counts.x = length(SRA_id.x)), by=SRA_id.x]
-d[, .(sample_counts.y = length(SRA_id.y)), by=SRA_id.y]
+d[, .(sample_counts = length(study_id)), by=study_id]
 
 write.table(d, file='merged.tab', row.names=FALSE, quote=FALSE, sep="\t")

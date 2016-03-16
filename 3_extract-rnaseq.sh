@@ -10,6 +10,7 @@ DEFINE_string 'rnaseq-dir' '' 'RNA-seq metadata output directory' 'o'
 DEFINE_string 'experiment' '' 'Full experiment data filename'     'e'
 DEFINE_string 'sample'     '' 'Full sample data filename'         's'
 DEFINE_string 'study'      '' 'Full study data filename'          'd'
+DEFINE_string 'idmap'      '' 'Map of ids: exp, sam, std, biosam, biopro, sra_id' 'i'
 
 FLAGS "$@" || exit 1
 [[ ${FLAGS_help} -eq ${FLAGS_TRUE} ]] && exit 0
@@ -34,8 +35,9 @@ fi
 
 (
     LANG=C
-    idmap=${FLAGS_rnaseq_dir}/rnaseq-id-map
-    awk -v sf=$sra_accessions      \
+    idmap=${FLAGS_idmap}
+    echo -e "experiment_id\tsample_id\tstudy_id\tbiosample\tbioproject\tsubmission_id" > $idmap
+    awk -v sf=$sra_accessions     \
         -v ef=${FLAGS_experiment} \
         'BEGIN{FS="\t"; OFS=FS}
          FILENAME == ef && $5 == "RNA-Seq" {a[$1]++}
@@ -48,7 +50,7 @@ fi
             submission=$2
             print experiment, sample, study, biosample, bioproject, submission
          }
-         ' "${FLAGS_experiment}" "$sra_accessions" | sort -u > "$idmap"
+         ' "${FLAGS_experiment}" "$sra_accessions" | sort -u >> "$idmap"
 
     for f in "${FLAGS_experiment}" "${FLAGS_sample}" "${FLAGS_study}"
     do
@@ -57,14 +59,14 @@ fi
     done
 
     out=${FLAGS_rnaseq_dir}/`basename ${FLAGS_experiment}`
-    join <(cut -f 1 $idmap | sort -k1,1) \
-         <(sort -k1,1 ${FLAGS_experiment}) -t $'\t' >> $out &
+    join <(cut -f 1 $idmap | sort -u) \
+         <(sort -k1,1 ${FLAGS_experiment}) --header -t $'\t' >> $out &
 
     out=${FLAGS_rnaseq_dir}/`basename ${FLAGS_sample}`
-    join <(cut -f 2 $idmap | sort -k1,1) <(sort -k1,1 ${FLAGS_sample}) -t $'\t' >> $out &
+    join <(cut -f 2 $idmap | sort -u) <(sort -k1,1 ${FLAGS_sample}) --header -t $'\t' >> $out &
 
     out=${FLAGS_rnaseq_dir}/`basename ${FLAGS_study}`
-    join <(cut -f 3 $idmap | sort -k1,1) <(sort -k1,1 ${FLAGS_study}) -t $'\t' >> $out &
+    join <(cut -f 3 $idmap | sort -u) <(sort -k1,1 ${FLAGS_study}) --header -t $'\t' >> $out &
 
     wait
 )
