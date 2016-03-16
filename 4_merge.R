@@ -9,18 +9,15 @@ version <- '0.1'
 
 fields <- list(
   study = c(
-    'SRA_id',
     'study_id',
     'study_title',
     'abstract'),
   sample = c(
-    'SRA_id',
     'sample_id',
     'sample_title',
     'taxon_id',
     'species'),
   experiment = c(
-    'SRA_id',
     'experiment_id',
     'sample_id',
     'design_description',
@@ -57,7 +54,7 @@ if(args$version){
 files <- args$files
 
 # # For debugging
-files=list('study.tab', 'sample.tab', 'experiment.tab')
+# files=list('study.tab', 'sample.tab', 'experiment.tab')
 
 if(any(lapply(files, file.access, mode=4) != 0)){
   stop('One or more input file is not readable')
@@ -66,7 +63,7 @@ if(any(lapply(files, file.access, mode=4) != 0)){
 
 
 f <- files %>%
-  lapply(read.delim) %>%
+  lapply(read.delim, quote='') %>%
   lapply(as.data.table)
 names(f) <- c('study', 'sample', 'experiment')
 
@@ -84,6 +81,7 @@ for(i in 1:length(f)){
   }
 }
 
+# TODO SRA_id are no longer used, merge on experimental id. At step 3 merge in experimental ids.
 d <- merge(f$study, f$sample, by="SRA_id", all=TRUE) %>%
   merge(f$experiment, by="sample_id", all=TRUE)
 

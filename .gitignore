@@ -1,6 +1,4 @@
-.drake
-drake.*
-__*
+data/
 
 *.aux
 *.bbl

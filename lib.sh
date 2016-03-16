@@ -1,11 +1,5 @@
 #!/bin/bash
 
-# Die if undeclared variable is evaluated
-set -u
-
-# Die on the first failed command
-set -e
-
 # This script will retrieve metadata for all SRA datasets in the SRA database.
 # Output will be the following files in the working directory.
 
@@ -29,7 +23,8 @@ set -e
 # -------------------------------------------------------------------
 
 METADATA_URL="ftp://ftp.ncbi.nlm.nih.gov/sra/reports/Metadata/"
-METADATA_PATTERN='NCBI_SRA_Metadata_20\d{6}\.tar\.gz'
+
+METADATA_PATTERN='NCBI_SRA_Metadata_Full_20\d{6}\.tar\.gz'
 
 
 # ===================================================================
@@ -57,31 +52,37 @@ get-latest-metadata-url (){
 fetch-metadata (){
     url=$1
     name=$2
-    curl -o ${name}.tar.gz "$url"
+    base=$(basename $1 | sed 's/\..*//')
+    curl -o ${base}.tar.gz "$url"
     if [ $? -ne 0 ]; then
         echo "Failed to open '$url'" >&2
+        rm
         exit 1
     fi
-    gunzip ${name}.tar.gz
-    tar -xf ${name}.tar
+    echo 'Unzipping ${name}.tar.gz}'
+    gunzip ${base}.tar.gz
+    echo 'Extracting ${name}.tar}'
+    tar -xf ${base}.tar
+    [[ -d ${name} ]] && rmdir ${name}
+    mv ${base} ${name}
     cd $name
     rm SRA_Accessions SRA_Files_Md5 SRA_Run_Members
+    echo "Removing gratuitous nesting ${name}"
     find . -name '*.xml' | xargs -I {} mv {} . 2> /dev/null
+    echo 'Removing unneeded directories'
     find . -type d | xargs rmdir 2> /dev/null
     cd -
+    echo 'Removing the tar file'
     rm ${name}.tar
 }
 
 extract-study (){
-    make-header SRA_id study_id study_title abstract
+    make-header study_id study_title abstract
     find $1 -name '*study.xml' | while read f
     do
-        sraid=`file2id $f`
         xmlstarlet sel \
             -t \
             -m '/STUDY_SET/STUDY' \
-                -o $sraid \
-                -o $'\t' \
                 -v 'IDENTIFIERS/PRIMARY_ID' \
                 -o $'\t' \
                 -v 'DESCRIPTOR/STUDY_TITLE' \
@@ -93,15 +94,12 @@ extract-study (){
 }
 
 extract-sample (){
-    make-header SRA_id sample_id sample_title taxon_id species
+    make-header sample_id sample_title taxon_id species
     find $1 -name '*sample.xml' | while read f
     do
-        sraid=`file2id $f`
         xmlstarlet sel \
             -t \
             -m '/SAMPLE_SET/SAMPLE' \
-                -o $sraid \
-                -o $'\t' \
                 -v 'IDENTIFIERS/PRIMARY_ID' \
                 -o $'\t' \
                 -v 'TITLE' \
@@ -115,15 +113,12 @@ extract-sample (){
 }
 
 extract-experiment (){
-    make-header SRA_id experiment_id sample_id design_description library_name library_strategy library_source instrument_model
+    make-header experiment_id sample_id design_description library_name library_strategy library_source instrument_model
     find $1 -name '*experiment.xml' | while read f
     do
-        sraid=`file2id $f`
         xmlstarlet sel \
             -t \
             -m '/EXPERIMENT_SET/EXPERIMENT' \
-                -o $sraid \
-                -o $'\t' \
                 -v 'IDENTIFIERS/PRIMARY_ID' \
                 -o $'\t' \
                 -v 'DESIGN/SAMPLE_DESCRIPTOR/IDENTIFIERS/PRIMARY_ID' \
@@ -143,16 +138,13 @@ extract-experiment (){
 }
 
 from-sample-extract-attributes (){
-    make-header SRA_id sample_id sample_tag sample_value
+    make-header sample_id sample_tag sample_value
     find $1 -name '*sample.xml' | while read f
     do
-        sraid=`file2id $f`
         xmlstarlet sel \
             -t \
             -m '/SAMPLE_SET/SAMPLE' \
                 -o '___'$'\t' \
-                -o $sraid \
-                -o $'\t' \
                 -v 'IDENTIFIERS/PRIMARY_ID' -n \
                 -m 'SAMPLE_ATTRIBUTES/SAMPLE_ATTRIBUTE' \
                     -v 'TAG' \

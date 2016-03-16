@@ -29,13 +29,15 @@ while getopts "he:s:d:a:x:r:" opt; do
     esac 
 done
 
-source functions.sh
+source lib.sh
 
 [[ -d ${rna} ]] || mkdir ${rna}
 
-[[ -d ${exp} ]] || extract-experiment             ${xml} > ${exp}
-[[ -d ${sam} ]] || extract-sample                 ${xml} > ${sam}
-[[ -d ${std} ]] || extract-study                  ${xml} > ${std}
-[[ -d ${atr} ]] || from-sample-extract-attributes ${xml} > ${atr}
+[[ -d ${exp} ]] || extract-experiment             ${xml} > ${exp} &
+[[ -d ${sam} ]] || extract-sample                 ${xml} > ${sam} &
+[[ -d ${std} ]] || extract-study                  ${xml} > ${std} &
+[[ -d ${atr} ]] || from-sample-extract-attributes ${xml} > ${atr} &
+
+wait
 
 extract-rnaseq-data ${rna} ${exp} ${sam} ${std}
