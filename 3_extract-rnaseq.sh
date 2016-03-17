@@ -1,31 +1,36 @@
 #!/bin/bash
 set -u
 
-source shflags.sh
 source lib.sh
 
-FLAGS_HELP="Extract RNA-seq data from full metadata"
-
-DEFINE_string 'rnaseq-dir' '' 'RNA-seq metadata output directory' 'o'
-DEFINE_string 'experiment' '' 'Full experiment data filename'     'e'
-DEFINE_string 'sample'     '' 'Full sample data filename'         's'
-DEFINE_string 'study'      '' 'Full study data filename'          'd'
-DEFINE_string 'idmap'      '' 'Map of ids: exp, sam, std, biosam, biopro, sra_id' 'i'
-
-FLAGS "$@" || exit 1
-[[ ${FLAGS_help} -eq ${FLAGS_TRUE} ]] && exit 0
-
-[[ -d ${FLAGS_rnaseq_dir} ]] || mkdir ${FLAGS_rnaseq_dir}
-
-for f in "${FLAGS_experiment}" "${FLAGS_sample}" "${FLAGS_study}"
-do
-    if [[ ! -r $f ]]
-    then
-        printf "Cannot open '%s'" $f >&2
-        exit 1
-    fi
+while getopts "ho:e:s:d:i:" opt; do
+    case $opt in
+        h)
+            echo 'Extract RNA-seq data from full metadata'
+            echo '  -o RNA-seq metadata output directory'
+            echo '  -e Full experiment data filename'
+            echo '  -s Full sample data filename'
+            echo '  -d Full study data filename'
+            echo '  -i Map of ids: exp | sam | std | biosam | biopro | sub'
+            exit 0 ;;
+        o) 
+            rnaseq_dir=$OPTARG
+            mkdir -p $rnaseq_dir
+            ;;
+        e) 
+            exp=$OPTARG ;;
+        s) 
+            sam=$OPTARG ;;
+        d) 
+            std=$OPTARG ;;
+        i) 
+            ids=$OPTARG ;;
+    esac 
 done
 
+assert-files-are-readable "$exp" "$sam" "$std"
+
+# TODO remove the hard-coding
 sra_accessions=data/SRA_Accessions.tab
 
 if [[ ! -r "$sra_accessions" ]]
@@ -34,39 +39,49 @@ then
 fi
 
 (
-    LANG=C
-    idmap=${FLAGS_idmap}
+    LANG=C # make sort very fast
+    idmap=$ids
     echo -e "experiment_id\tsample_id\tstudy_id\tbiosample\tbioproject\tsubmission_id" > $idmap
-    awk -v sf=$sra_accessions     \
-        -v ef=${FLAGS_experiment} \
+    awk -v sf=$sra_accessions \
+        -v ef=$exp \
         'BEGIN{FS="\t"; OFS=FS}
-         FILENAME == ef && $5 == "RNA-Seq" {a[$1]++}
-         FILENAME == sf && $3 == "live" && $11 in a {
-            experiment=$11
+         FILENAME == ef && $4 == "RNA-Seq" {a[$1]++}
+         FILENAME == sf && $3 == "live" && ($11 in a || ($7 == "EXPERIMENT" && $1 in a)) {
+            if($7 == "EXPERIMENT"){
+                experiment=$1
+            } else {
+                experiment=$11
+            }
             sample=$12
             study=$13
             biosample=$18
             bioproject=$20
             submission=$2
-            print experiment, sample, study, biosample, bioproject, submission
+            if(sample != "-"){
+                print experiment, sample, study, biosample, bioproject, submission
+            } else {
+                print experiment " is missing a sample" > "log"
+            }
          }
-         ' "${FLAGS_experiment}" "$sra_accessions" | sort -u >> "$idmap"
+         ' "$exp" "$sra_accessions" | sort -u >> "$idmap"
 
-    for f in "${FLAGS_experiment}" "${FLAGS_sample}" "${FLAGS_study}"
+    for f in "$exp" "$sam" "$std"
     do
-        out=${FLAGS_rnaseq_dir}/`basename $f`
+        out=$rnaseq_dir/`basename $f`
         head -1 $f > $out
     done
 
-    out=${FLAGS_rnaseq_dir}/`basename ${FLAGS_experiment}`
-    join <(cut -f 1 $idmap | sort -u) \
-         <(sort -k1,1 ${FLAGS_experiment}) --header -t $'\t' >> $out &
+    out=$rnaseq_dir/`basename $exp`
+    join <(tail -n +2 $idmap | cut -f 1 | sort -u) \
+         <(tail -n +2 $exp | sort -k1,1 $exp) -t $'\t' >> $out &
 
-    out=${FLAGS_rnaseq_dir}/`basename ${FLAGS_sample}`
-    join <(cut -f 2 $idmap | sort -u) <(sort -k1,1 ${FLAGS_sample}) --header -t $'\t' >> $out &
+    out=$rnaseq_dir/`basename $sam`
+    join <(tail -n +2 $idmap | cut -f 2 | sort -u) \
+         <(tail -n +2 $sam | sort -k1,1) -t $'\t' >> $out &
 
-    out=${FLAGS_rnaseq_dir}/`basename ${FLAGS_study}`
-    join <(cut -f 3 $idmap | sort -u) <(sort -k1,1 ${FLAGS_study}) --header -t $'\t' >> $out &
+    out=$rnaseq_dir/`basename $std`
+    join <(tail -n +2 $idmap | cut -f 3 | sort -u) \
+         <(tail -n +2 $std | sort -k1,1) -t $'\t' >> $out &
 
     wait
 )

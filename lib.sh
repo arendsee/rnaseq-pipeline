@@ -27,6 +27,39 @@ METADATA_URL="ftp://ftp.ncbi.nlm.nih.gov/sra/reports/Metadata/"
 METADATA_PATTERN='NCBI_SRA_Metadata_Full_20\d{6}\.tar\.gz'
 
 
+
+
+# ===================================================================
+# Utilities
+# -------------------------------------------------------------------
+
+# subset (){
+#     # ASSUMES: both have headers
+#
+#     a_index=$1 # column index with subset of b's values
+#     b_index=$2 # column index of a's values
+#     a=$3       # a's filename
+#     b=$4       # b's filename
+#     out=$5     # output filename
+#     # write header
+#     head -1 $b > $out
+#     # append subseted data
+#     join <(tail -n +2 "$3" | cut -f $1 | sort -u) \
+#          <(tail -n +2 "$4" | sort -k$2,$2) --header -t $'\t' | sort >> $out
+# }
+
+assert-files-are-readable (){
+    for f in $@
+    do
+        if [[ ! -r "$f" ]]
+        then
+            printf "Cannot open '%s'" $f >&2
+            exit 1
+        fi
+    done
+}
+
+
 # ===================================================================
 # Function declarations
 # -------------------------------------------------------------------
@@ -113,7 +146,7 @@ extract-sample (){
 }
 
 extract-experiment (){
-    make-header experiment_id sample_id design_description library_name library_strategy library_source instrument_model
+    make-header experiment_id design_description library_name library_strategy library_source instrument_model
     find $1 -name '*experiment.xml' | while read f
     do
         xmlstarlet sel \

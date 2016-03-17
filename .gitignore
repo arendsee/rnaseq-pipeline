@@ -1,5 +1,9 @@
 data/
 
+log
+
+*.tab
+
 *.aux
 *.bbl
 *.blg

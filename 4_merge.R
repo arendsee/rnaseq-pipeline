@@ -62,13 +62,13 @@ if(args$version){
   q()
 }
 
-  # TODO - delete
-  files <- list(
-    study='study.tab',
-    sample='sample.tab',
-    experiment='experiment.tab',
-    ids='rnaseq-id-map'
-  )
+
+  # files <- list(
+  #   study='study.tab',
+  #   sample='sample.tab',
+  #   experiment='experiment.tab',
+  #   ids='rnaseq-id-map'
+  # )
 files <- args$files
 
 
@@ -101,8 +101,8 @@ for(i in 1:length(f)){
 }
 
 d  <- merge(f$ids, f$experiment, by="experiment_id", all=TRUE) %>%
-d2 <- merge(d, f$sample, by="sample_id", all=TRUE)
-d3 <- merge(d2, f$study, by="study_id", all=TRUE)
+      merge(       f$sample,     by="sample_id",     all=TRUE) %>%
+      merge(       f$study,      by="study_id",      all=TRUE)
 
 d[, .(sample_counts = length(study_id)), by=study_id]
 

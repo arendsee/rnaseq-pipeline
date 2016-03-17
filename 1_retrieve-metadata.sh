@@ -1,22 +1,31 @@
 #!/bin/bash
 set -u
 
-source shflags.sh
 source lib.sh
 
-DEFINE_string 'output-directory' 'data/metadata' 'directory for SRA metadata XML dump' 'u'
+usage (){
+    echo "Retrieve SRA metadata from the SRA database"
+    echo "  -u  directory for SRA metadata XML dump"
+    exit 0
+}
 
-FLAGS_HELP="Retrieve SRA metadata from the SRA database"
+[[ $# -eq 0 ]] && usage
 
-FLAGS "$@" || exit 1
-[[ ${FLAGS_help} -eq ${FLAGS_TRUE} ]] && exit 0
+while getopts "hu:" opt; do
+    case $opt in
+        h)
+            usage ;;
+        u) 
+            outdir=$OPTARG ;;
+    esac 
+done
 
-if [[ -z ${FLAGS_output_directory} ]]
+if [[ -z $outdir ]]
 then
     echo "Please specify an output directory (-u option)" >&2
     exit 1
 fi
 
-mkdir -p ${FLAGS_output_directory}
+mkdir -p $outdir
 
-fetch-metadata "$(get-latest-metadata-url)" ${FLAGS_output_directory}
+fetch-metadata "$(get-latest-metadata-url)" $outdir
