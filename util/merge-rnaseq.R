@@ -5,18 +5,7 @@ require(plyr, quiet=TRUE)
 require(magrittr, quiet=TRUE)
 require(data.table, quiet=TRUE)
 
-version <- '0.1'
-
 fields <- list(
-  study = c(
-    'study_id',
-    'study_title',
-    'abstract'),
-  sample = c(
-    'sample_id',
-    'sample_title',
-    'taxon_id',
-    'species'),
   experiment = c(
     'experiment_id',
     'design_description',
@@ -24,6 +13,15 @@ fields <- list(
     'library_strategy',
     'library_source',
     'instrument_model'),
+  sample = c(
+    'sample_id',
+    'sample_title',
+    'taxon_id',
+    'species'),
+  study = c(
+    'study_id',
+    'study_title',
+    'abstract'),
   ids = c(
     'experiment_id',
     'sample_id',
@@ -40,18 +38,8 @@ parser <- ArgumentParser(
   usage='merge.R [options]')
 
 parser$add_argument(
-  '-v', '--version',
-  action='store_true',
-  default=FALSE)
-
-parser$add_argument(
-  '-i' , '--taxids',
-  help='Taxon ids to extract in the final output'
-)
-
-parser$add_argument(
   'files',
-  help='study.tab, sample.tab, experiment.tab, and an idmap',
+  help='experiment.tab, sample.tab, study.tab, and an idmap',
   nargs=4
 )
 
@@ -64,9 +52,9 @@ if(args$version){
 
 
   # files <- list(
-  #   study='study.tab',
-  #   sample='sample.tab',
   #   experiment='experiment.tab',
+  #   sample='sample.tab',
+  #   study='study.tab',
   #   ids='rnaseq-id-map'
   # )
 files <- args$files
@@ -84,7 +72,7 @@ if(any(lapply(files, file.access, mode=4) != 0)){
 f <- files %>%
   lapply(read.delim, quote='') %>%
   lapply(as.data.table)
-names(f) <- c('study', 'sample', 'experiment', 'ids')
+names(f) <- c('experiment', 'sample', 'study', 'ids')
 
 
 for(i in 1:length(f)){
