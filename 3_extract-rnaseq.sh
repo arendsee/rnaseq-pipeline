@@ -3,16 +3,22 @@ set -u
 
 source lib.sh
 
+usage (){
+    echo 'Extract RNA-seq data from full metadata'
+    echo '  -o RNA-seq metadata output directory'
+    echo '  -e Full experiment data filename'
+    echo '  -s Full sample data filename'
+    echo '  -d Full study data filename'
+    echo '  -i Map of ids: exp | sam | std | biosam | biopro | sub'
+    exit 0
+}
+
+[[ $# -eq 0 ]] && usage
+
 while getopts "ho:e:s:d:i:" opt; do
     case $opt in
         h)
-            echo 'Extract RNA-seq data from full metadata'
-            echo '  -o RNA-seq metadata output directory'
-            echo '  -e Full experiment data filename'
-            echo '  -s Full sample data filename'
-            echo '  -d Full study data filename'
-            echo '  -i Map of ids: exp | sam | std | biosam | biopro | sub'
-            exit 0 ;;
+            usage ;;
         o) 
             rnaseq_dir=$OPTARG
             mkdir -p $rnaseq_dir
