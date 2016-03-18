@@ -32,4 +32,4 @@ while getopts "ho:e:s:d:i:" opt; do
     esac 
 done
 
-./util/merge-rnaseq.R "$exp" "$sam" "$std" "$ids"
+./code/merge-rnaseq.R "$exp" "$sam" "$std" "$ids"

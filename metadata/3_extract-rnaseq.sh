@@ -1,7 +1,7 @@
 #!/bin/bash
 set -u
 
-source lib.sh
+source code/lib.sh
 
 usage (){
     echo 'Extract RNA-seq data from full metadata'
