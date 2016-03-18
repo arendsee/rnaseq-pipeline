@@ -37,10 +37,14 @@ mkdir -p "$outdir"
 
 runids="$tmpdir"/runids.tab
 
-./1_get_runids.sh -i "$sample_ids" > $runids
+./1_get_runids.sh -i "$sample_ids" -s $outdir/samples > $runids
 
 while read id
 do
-    ./2_runid-to-fastq.sh -r $id -o "$tmpdir"
-    ./3_fastq-to-FPKM.sh -r $id -t $transcriptome -m $tmpdir -o $outdir -c
+    echo "---- $id ----" >&2
+    echo "   retrieving fastq file" >&2
+    time ./2_runid-to-fastq.sh -r $id -o "$tmpdir"
+    echo "   aligning to index" >&2
+    time ./3_fastq-to-FPKM.sh -r $id -t $transcriptome -m $tmpdir -o $outdir -c
+    echo >&2
 done < $runids

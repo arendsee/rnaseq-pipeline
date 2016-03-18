@@ -6,20 +6,23 @@ cat << EOF
 Read file of SRA sample_ids (SRS*), output run_ids (SRR*)
 Required Arguments
   -i SAMPLES file of sample ids
+  -s directory to which sample XML files will be written
 EOF
 exit 0
 }
 
 [[ $# -eq 0 ]] && usage
 
-id_file= id_list=
-while getopts "hi:" opt; do
+id_file= sampledir=samples
+while getopts "hi:s:" opt; do
     case $opt in
         h)
             usage ;;
         i) 
             id_file=$OPTARG
             shift; shift ;;
+        s)
+            sampledir=$OPTARG
     esac 
 done
 
@@ -50,12 +53,12 @@ eufet() {
     done
 }
 
-mkdir -p samples
+mkdir -p $sampledir
 
 print-id (){
     sleep 1 # so they don't block my ip address
     eusrc sra $1 | eufet |
-        xmlstarlet fo | tee samples/${1}.xml |
+        xmlstarlet fo | tee $sampledir/${1}.xml |
         xmlstarlet sel --template \
             --match 'EXPERIMENT_PACKAGE_SET/EXPERIMENT_PACKAGE/RUN_SET/RUN/IDENTIFIERS' \
                 --value-of 'PRIMARY_ID' --nl \
