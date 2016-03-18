@@ -20,3 +20,15 @@ while getopts "hr:" opt; do
             runid=$OPTARG ;;
     esac 
 done
+
+
+# Options descriptions
+# split-files    - split paired-end data into files suffixed with _1 and _2
+# readids        - append read id (.1, .2) after spot id
+# dumpbase       - output as ACGT bases rather than color-base (e.g. from SOLiD)
+# clip           - remove left and right tags
+# skip-technical - skip technical reads (not useable by Kallisto, also is
+#                  specific to Illumina multiplexing library construction
+#                  protocol)
+
+fastq-dump --readids --split-files --dumpbase --skip-technical --clip  $runid
