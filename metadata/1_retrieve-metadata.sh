@@ -1,7 +1,7 @@
 #!/bin/bash
 set -u
 
-source lib.sh
+source code/lib.sh
 
 usage (){
     echo "Retrieve SRA metadata from the SRA database"

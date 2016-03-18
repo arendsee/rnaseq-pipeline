@@ -3,6 +3,7 @@ data/
 log
 
 *.tab
+rnaseq/samples
 
 *.aux
 *.bbl

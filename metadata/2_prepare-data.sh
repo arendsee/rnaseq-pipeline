@@ -2,6 +2,8 @@
 set -u
 set -e
 
+source code/lib.sh
+
 usage (){
     echo "Load RNA-seq data"
     echo "  -e EXP  experiment data"
@@ -33,8 +35,6 @@ while getopts "he:s:d:a:x:r:" opt; do
             rna=$OPTARG ;;
     esac 
 done
-
-source lib.sh
 
 [[ -d ${rna} ]] || mkdir -p ${rna}
 
