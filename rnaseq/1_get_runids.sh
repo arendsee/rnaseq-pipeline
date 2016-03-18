@@ -12,14 +12,14 @@ exit 0
 
 [[ $# -eq 0 ]] && usage
 
-while getopts "hi:o:" opt; do
+id_file= id_list=
+while getopts "hi:" opt; do
     case $opt in
         h)
             usage ;;
         i) 
-            ids=$OPTARG ;;
-        o)
-            output=$OPTARG ;;
+            id_file=$OPTARG
+            shift; shift ;;
     esac 
 done
 
@@ -52,13 +52,26 @@ eufet() {
 
 mkdir -p samples
 
-while read id
-do
-    eusrc sra $id | eufet |
-        xmlstarlet fo | tee samples/${id}.xml |
+print-id (){
+    sleep 1 # so they don't block my ip address
+    eusrc sra $1 | eufet |
+        xmlstarlet fo | tee samples/${1}.xml |
         xmlstarlet sel --template \
             --match 'EXPERIMENT_PACKAGE_SET/EXPERIMENT_PACKAGE/RUN_SET/RUN/IDENTIFIERS' \
                 --value-of 'PRIMARY_ID' --nl \
             --break
-    sleep 1 # so they don't block my ip address
-done < "$ids" | sort -u > "$output"
+}
+
+
+if [[ -r "$id_file" ]]
+then
+    while read id
+    do
+        print-id $id
+    done < "$ids"
+else
+    for id in $@
+    do
+        print-id $id
+    done
+fi | sort -u

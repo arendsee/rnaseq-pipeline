@@ -3,7 +3,11 @@ data/
 log
 
 *.tab
+*.fastq
+*.index
 rnaseq/samples
+rnaseq/final-output
+rnaseq/*-bootstrap
 
 *.aux
 *.bbl
