@@ -5,10 +5,11 @@ usage (){
 cat << EOF
 Map reads of a single fastq file to a transcriptome creating a FPKM table
 Required Arguments
-  -r FILE a single fastq file
-  -t FILE a fasta transcriptome file
-  -o FILE an FPKM output table
-  -c      delete fastq data
+  -r a run id, which is the basename of a[n] fastq file[s]
+  -t a fasta transcriptome file
+  -m directory in which fastq files and temporary output is stored
+  -o final output directory
+  -c delete fastq data
 EOF
 exit 0
 }
@@ -24,14 +25,16 @@ while getopts "hcr:o:t:" opt; do
             runid=$OPTARG ;;
         t)
             transcriptome=$OPTARG ;;
-        o) 
-            output=$OPTARG ;;
+        m) 
+            tmpdir=$OPTARG ;;
+        o)
+            outdir=$OPTARG ;;
         c)
             clean=1 ;;
     esac 
 done
 
-mkdir -p final-output
+mkdir -p $outdir
 
 
 # build an index of the transcriptome for use by kallisto
@@ -43,19 +46,20 @@ fi
 
 
 # align reads to transcriptome index
+kallisto_outdir=${tmpdir}/${runid}-bootstrap
 kallisto quant                      \
     --index="$transcriptome"        \
     --bootstrap-samples=100         \
-    --output-dir=${runid}-bootstrap \
+    --output-dir="$kallisto_outdir" \
     --threads=8                     \
-    ${runid}_*
+    ${tmpdir}/${runid}_*
 
 
 # move results and run details into results folder
-mv ${runid}-bootstrap/abundance.tsv final-output/${runid}.tsv
-mv ${runid}-bootstrap/run_info.json final-output/${runid}.json
+mv $kallisto_outdir/abundance.tsv $outdir/${runid}.tsv
+mv $kallisto_outdir/run_info.json $outdir/${runid}.json
 
 
 # clean up
-[[ $clean -eq 1 ]] && rm ${runid}*.fastq
-[[ $clean -eq 1 ]] && rm -rf ${runid}-bootstrap
+[[ $clean -eq 1 ]] && rm ${tmpdir}/${runid}*.fastq
+[[ $clean -eq 1 ]] && rm -rf $kallisto_outdir

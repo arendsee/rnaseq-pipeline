@@ -68,7 +68,7 @@ then
     while read id
     do
         print-id $id
-    done < "$ids"
+    done < "$id_file"
 else
     for id in $@
     do
