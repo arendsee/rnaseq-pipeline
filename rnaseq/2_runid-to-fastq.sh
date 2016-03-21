@@ -49,17 +49,16 @@ prefetch \
     $runid
 
 # TODO
-# 0. change outdir options to reflect preftech idiosyncracies
-# 1. convert bam file to fastq
-# 2. split into paired-end files
-# 3. remove adapters
-# 4. filter reads?
-
-# fastq-dump             \
-#     --readids          \
-#     --split-files      \
-#     --dumpbase         \
-#     --skip-technical   \
-#     --clip             \
-#     --outdir "$outdir" \
-#     $runid
+# - change outdir options to reflect preftech idiosyncracies
+# - with samtools:
+#     - use quickcheck to ensure the full BAM file was retrieved
+#     - split into paired-end files
+#     - check quality `bamtools stats`?
+#     - convert to fastq
+# - remove adapters (can this be done in BAM forat with samtools?)
+# - filter reads, do I really need to do this?
+#
+# Problems:
+# - do I need to skip technical replicates?
+# - what about color?
+# - how should I deal with non-paired-end reads?
