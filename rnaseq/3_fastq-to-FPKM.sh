@@ -10,14 +10,15 @@ Required Arguments
   -m directory in which fastq files and temporary output is stored
   -o final output directory
   -c delete fastq data
+  -d the directory where fastq-dump caches downloaded files
 EOF
 exit 0
 }
 
 [[ $# -eq 0 ]] && usage
 
-clean=
-while getopts "hcr:o:t:" opt; do
+clean= sracache=
+while getopts "hcr:o:t:m:d:" opt; do
     case $opt in
         h)
             usage ;;
@@ -31,6 +32,8 @@ while getopts "hcr:o:t:" opt; do
             outdir=$OPTARG ;;
         c)
             clean=1 ;;
+        d)
+            sracache=$OPTARG ;;
     esac 
 done
 
@@ -57,9 +60,11 @@ kallisto quant                      \
 
 # move results and run details into results folder
 mv $kallisto_outdir/abundance.tsv $outdir/${runid}.tsv
+mv $kallisto_outdir/abundance.h5 $outdir/${runid}.h5
 mv $kallisto_outdir/run_info.json $outdir/${runid}.json
 
 
 # clean up
 [[ $clean -eq 1 ]] && rm ${tmpdir}/${runid}*.fastq
 [[ $clean -eq 1 ]] && rm -rf $kallisto_outdir
+[[ $clean -eq 1 && -d "$sracache" ]] && rm -f "$sracache"/${runid}*

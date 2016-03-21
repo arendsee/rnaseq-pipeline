@@ -25,6 +25,13 @@ while getopts "hr:o:" opt; do
 done
 
 
+# Check whether the experiment was paired-end
+if [[ $(fastq-dump -X 1 -Z --split-files $runid 2> /dev/null | wc -l) -eq 4 ]]
+then
+    echo "The experiment $runid is not paired-ends, skipping" >&2 
+    exit 1
+fi
+
 # Options descriptions
 # split-files    - split paired-end data into files suffixed with _1 and _2
 # readids        - append read id (.1, .2) after spot id
@@ -34,11 +41,25 @@ done
 #                  specific to Illumina multiplexing library construction
 #                  protocol)
 
-fastq-dump             \
-    --readids          \
-    --split-files      \
-    --dumpbase         \
-    --skip-technical   \
-    --clip             \
-    --outdir "$outdir" \
+# Load bamfile into ncbi/public/sra folder
+prefetch \
+    --max-size 100G \
+    --transport ascp \
+    --ascp-path "/opt/aspera/bin/ascp|/opt/aspera/etc/asperaweb_id_dsa.openssh" \
     $runid
+
+# TODO
+# 0. change outdir options to reflect preftech idiosyncracies
+# 1. convert bam file to fastq
+# 2. split into paired-end files
+# 3. remove adapters
+# 4. filter reads?
+
+# fastq-dump             \
+#     --readids          \
+#     --split-files      \
+#     --dumpbase         \
+#     --skip-technical   \
+#     --clip             \
+#     --outdir "$outdir" \
+#     $runid

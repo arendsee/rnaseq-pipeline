@@ -9,6 +9,7 @@ REQUIRED ARGUMENTS
   -t transcriptome index or fasta (*.fna) file
   -m temporary output directory of huge files (e.g. fastq)
   -o directory of output of final data
+  -d the directory where fastq-dump caches downloaded files
 EOF
     exit 0
 }
@@ -16,8 +17,12 @@ EOF
 # print help with no arguments
 [[ $# -eq 0 ]] && usage
 
-transcriptome= sample_ids= tmpdir=. outdir=final-output
-while getopts "ht:s:m:o:" opt; do
+transcriptome=
+sample_ids=
+tmpdir=.
+outdir=final-output
+sracache=$HOME/ncbi/public
+while getopts "ht:s:m:o:c:" opt; do
     case $opt in
         h)
             usage ;;
@@ -29,6 +34,8 @@ while getopts "ht:s:m:o:" opt; do
             tmpdir=$OPTARG ;;
         o)
             outdir=$OPTARG ;;
+        c)
+            sracache=$OPTARG ;;
     esac 
 done
 
@@ -37,14 +44,37 @@ mkdir -p "$outdir"
 
 runids="$tmpdir"/runids.tab
 
+run-has-been-processed (){
+    ls "$outdir" | grep $1 > /dev/null
+    echo $?
+}
+
+echo -n "Retrieving run ids ... " >&2
 ./1_get_runids.sh -i "$sample_ids" -s $outdir/samples > $runids
+printf "found %s ids\n\n" $(wc -l $runids) >&2
 
 while read id
 do
     echo "---- $id ----" >&2
-    echo "   retrieving fastq file" >&2
-    time ./2_runid-to-fastq.sh -r $id -o "$tmpdir"
-    echo "   aligning to index" >&2
-    time ./3_fastq-to-FPKM.sh -r $id -t $transcriptome -m $tmpdir -o $outdir -c
-    echo >&2
+    if [[ $(run-has-been-processed $id) -eq 0 ]]
+    then
+        echo "   Run has already been processed ... skipping"
+    else
+        echo "   retrieving fastq file" >&2
+        time ./2_runid-to-fastq.sh \
+            -r $id \
+            -o "$tmpdir"
+        if [[ $? -eq 0 ]]
+        then
+            echo "   aligning to index" >&2
+            time ./3_fastq-to-FPKM.sh \
+                -r $id \
+                -t $transcriptome \
+                -m $tmpdir \
+                -o $outdir \
+                -d $sracache \
+                -c
+            echo >&2
+        fi
+    fi
 done < $runids
