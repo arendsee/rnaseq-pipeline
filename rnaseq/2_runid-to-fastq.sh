@@ -1,6 +1,8 @@
 #!/bin/bash
 set -u
 
+NCBI_DIR=$HOME/ncbi/sra
+
 usage (){
 cat << EOF
 Download the fastq entry for a single run id
@@ -32,6 +34,13 @@ then
     exit 1
 fi
 
+# Load sra archive into ncbi/public/sra folder
+prefetch             \
+    --max-size 100G  \
+    --transport ascp \
+    --ascp-path "/opt/aspera/bin/ascp|/opt/aspera/etc/asperaweb_id_dsa.openssh" \
+    $runid
+
 # Options descriptions
 # split-files    - split paired-end data into files suffixed with _1 and _2
 # readids        - append read id (.1, .2) after spot id
@@ -40,25 +49,14 @@ fi
 # skip-technical - skip technical reads (not useable by Kallisto, also is
 #                  specific to Illumina multiplexing library construction
 #                  protocol)
+fastq-dump             \
+    --readids          \
+    --split-files      \
+    --dumpbase         \
+    --skip-technical   \
+    --clip             \
+    --qual-filter-1    \
+    --outdir "$outdir" \
+    $NCBI_DIR/${runid}.sra
 
-# Load bamfile into ncbi/public/sra folder
-prefetch \
-    --max-size 100G \
-    --transport ascp \
-    --ascp-path "/opt/aspera/bin/ascp|/opt/aspera/etc/asperaweb_id_dsa.openssh" \
-    $runid
-
-# TODO
-# - change outdir options to reflect preftech idiosyncracies
-# - with samtools:
-#     - use quickcheck to ensure the full BAM file was retrieved
-#     - split into paired-end files
-#     - check quality `bamtools stats`?
-#     - convert to fastq
-# - remove adapters (can this be done in BAM forat with samtools?)
-# - filter reads, do I really need to do this?
-#
-# Problems:
-# - do I need to skip technical replicates?
-# - what about color?
-# - how should I deal with non-paired-end reads?
+rm -f $NCBI_DIR/${runid}.*

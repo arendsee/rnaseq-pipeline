@@ -45,11 +45,6 @@ parser$add_argument(
 
 args <- parser$parse_args()
 
-if(args$version){
-  cat(sprintf('rstab v%s\n', version))
-  q()
-}
-
 
   # files <- list(
   #   experiment='experiment.tab',
@@ -88,10 +83,10 @@ for(i in 1:length(f)){
   }
 }
 
-d  <- merge(f$ids, f$experiment, by="experiment_id", all=TRUE) %>%
-      merge(       f$sample,     by="sample_id",     all=TRUE) %>%
-      merge(       f$study,      by="study_id",      all=TRUE)
+d <- merge(f$ids, f$experiment, by="experiment_id", all=TRUE) %>%
+     merge(       f$sample,     by="sample_id",     all=TRUE) %>%
+     merge(       f$study,      by="study_id",      all=TRUE)
 
-d[, .(sample_counts = length(study_id)), by=study_id]
+# d <- ddply(d, 'study_id', mutate, N=length(study_id))
 
 write.table(d, file='merged.tab', row.names=FALSE, quote=FALSE, sep="\t")

@@ -2,22 +2,22 @@
 set -u
 set -e
 
-DATA_DIR=${PWD}/data
-D_XML=${DATA_DIR}/metadata-dump
+DATA_DIR=$PWD/data
+D_XML=$DATA_DIR/metadata-dump
 
-D_EXP=${DATA_DIR}/experiment.tab
-D_SAM=${DATA_DIR}/sample.tab
-D_STD=${DATA_DIR}/study.tab
-D_ATR=${DATA_DIR}/sample-attributes.tab
+D_EXP=$DATA_DIR/experiment.tab
+D_SAM=$DATA_DIR/sample.tab
+D_STD=$DATA_DIR/study.tab
+D_ATR=$DATA_DIR/sample-attributes.tab
 
-RNASEQ_DIR=${DATA_DIR}/rnaseq
-RNASEQ_TABLE=${RNASEQ_DIR}/RNA-seq_sra.tab
+RNASEQ_DIR=$DATA_DIR/rnaseq
+RNASEQ_TABLE=$RNASEQ_DIR/RNA-seq_sra.tab
 
-R_EXP=${RNASEQ_DIR}/experiment.tab
-R_SAM=${RNASEQ_DIR}/sample.tab
-R_STD=${RNASEQ_DIR}/study.tab
-R_ATR=${RNASEQ_DIR}/sample-attributes.tab
-R_IDS=${RNASEQ_DIR}/rnaseq-id-map
+R_EXP=$RNASEQ_DIR/experiment.tab
+R_SAM=$RNASEQ_DIR/sample.tab
+R_STD=$RNASEQ_DIR/study.tab
+R_ATR=$RNASEQ_DIR/sample-attributes.tab
+R_IDS=$RNASEQ_DIR/rnaseq-id-map
 
 usage (){
     echo "Operations (run in alphabetic order):"
@@ -30,31 +30,36 @@ usage (){
 
 [[ $# -eq 0 ]] && usage
 
-mkdir -p ${DATA_DIR}
-mkdir -p ${RNASEQ_DIR}
+mkdir -p $DATA_DIR
+mkdir -p $RNASEQ_DIR
 
 while getopts "habcd" opt; do
     case $opt in
         h)
             usage ;;
         a)
-            bash 1_retrieve-metadata.sh ${D_XML} ;;
+            bash 1_retrieve-metadata.sh $D_XML ;;
         b)
             bash 2_prepare-data.sh \
-                -e ${D_EXP} \
-                -s ${D_SAM} \
-                -d ${D_STD} \
-                -a ${D_ATR} \
-                -x ${D_XML} \
-                -r ${RNASEQ_DIR} ;;
+                -e $D_EXP \
+                -s $D_SAM \
+                -d $D_STD \
+                -a $D_ATR \
+                -x $D_XML \
+                -o $RNASEQ_DIR ;;
         c)
             bash 3_extract-rnaseq.sh \
-                -o ${RNASEQ_DIR}     \
-                -e ${D_EXP}          \
-                -s ${D_SAM}          \
-                -d ${D_STD}          \
-                -i ${R_IDS} ;;
+                -e $D_EXP \
+                -s $D_SAM \
+                -d $D_STD \
+                -i $R_IDS \
+                -o $RNASEQ_DIR ;;
         d)
-            Rscript 4_merge.R ${R_STD} ${R_SAM} ${R_EXP} ${R_IDS} ;;
+            bash 4_merge-rnaseq.sh \
+                -d $R_STD \
+                -s $R_SAM \
+                -e $R_EXP \
+                -i $R_IDS \
+                -o $RNASEQ_DIR ;;
     esac 
 done

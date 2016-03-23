@@ -92,9 +92,9 @@ fetch-metadata (){
         rm
         exit 1
     fi
-    echo 'Unzipping ${name}.tar.gz}'
+    echo "Unzipping ${name}.tar.gz}"
     gunzip ${base}.tar.gz
-    echo 'Extracting ${name}.tar}'
+    echo "Extracting ${name}.tar}"
     tar -xf ${base}.tar
     [[ -d ${name} ]] && rmdir ${name}
     mv ${base} ${name}
@@ -106,7 +106,7 @@ fetch-metadata (){
     find . -type d | xargs rmdir 2> /dev/null
     cd -
     echo 'Removing the tar file'
-    rm ${name}.tar
+    rm ${base}.tar
 }
 
 extract-study (){
@@ -189,4 +189,58 @@ from-sample-extract-attributes (){
             $1 == "___" {file=$2; id=$3}
             $1 != "___" {print file, id, $0}
         '
+}
+
+extract-rnaseq-files (){
+    rnaseq_dir=$1
+    exp=$2
+    sam=$3
+    std=$4
+    ids=$5
+    sra_accessions=$6
+
+    idmap=$ids
+    echo -e "experiment_id\tsample_id\tstudy_id\tbiosample\tbioproject\tsubmission_id" > $idmap
+    awk -v sf=$sra_accessions \
+        -v ef=$exp \
+        'BEGIN{FS="\t"; OFS=FS}
+         FILENAME == ef && $4 == "RNA-Seq" {a[$1]++}
+         FILENAME == sf && $3 == "live" && ($11 in a || ($7 == "EXPERIMENT" && $1 in a)) {
+            if($7 == "EXPERIMENT"){
+                experiment = $1
+            } else {
+                experiment = $11
+            }
+            sample     = $12
+            study      = $13
+            biosample  = $18
+            bioproject = $20
+            submission = $2
+            if(sample != "-"){
+                print experiment, sample, study, biosample, bioproject, submission
+            } else {
+                print experiment " is missing a sample" > "log"
+            }
+         }
+         ' "$exp" "$sra_accessions" | sort -u >> "$idmap"
+
+    for f in "$exp" "$sam" "$std"
+    do
+        out=$rnaseq_dir/`basename $f`
+        head -1 $f > $out
+    done
+
+    out=$rnaseq_dir/`basename $exp`
+    join <(tail -n +2 $idmap | cut -f 1 | sort -u) \
+         <(tail -n +2 $exp | sort -k1,1 $exp) -t $'\t' >> $out &
+
+    out=$rnaseq_dir/`basename $sam`
+    join <(tail -n +2 $idmap | cut -f 2 | sort -u) \
+         <(tail -n +2 $sam | sort -k1,1) -t $'\t' >> $out &
+
+    out=$rnaseq_dir/`basename $std`
+    join <(tail -n +2 $idmap | cut -f 3 | sort -u) \
+         <(tail -n +2 $std | sort -k1,1) -t $'\t' >> $out &
+
+    wait
 }

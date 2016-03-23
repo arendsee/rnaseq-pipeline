@@ -11,7 +11,7 @@ usage (){
     echo "  -d STD  study data"
     echo "  -a ATR  sample attributes data"
     echo "  -x XML  The directory where the metadata should be"
-    echo "  -r RNA  output RNA data directory"
+    echo "  -o RNA  output RNA data directory"
     exit 0
 }
 
@@ -31,16 +31,16 @@ while getopts "he:s:d:a:x:r:" opt; do
             atr=$OPTARG ;;
         x)
             xml=$OPTARG ;;
-        r)
+        o)
             rna=$OPTARG ;;
     esac 
 done
 
-[[ -d ${rna} ]] || mkdir -p ${rna}
+[[ -d $rna ]] || mkdir -p $rna
 
-extract-experiment             ${xml} > ${exp} &
-extract-sample                 ${xml} > ${sam} &
-extract-study                  ${xml} > ${std} &
-from-sample-extract-attributes ${xml} > ${atr} &
+extract-experiment             $xml > $exp &
+extract-sample                 $xml > $sam &
+extract-study                  $xml > $std &
+from-sample-extract-attributes $xml > $atr &
 
 wait
