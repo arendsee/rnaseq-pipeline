@@ -9,6 +9,9 @@ Download the fastq entry for a single run id
 Required Arguments
   -r A single run id (e.g. SRR123456)
   -o output directory for fastq files
+Note: *.sra files are first downloaded into the \$HOME/ncbi/public/sra
+direcotry. The fastq files are then extracted, and then the *.sra files are
+deleted (to conserve space).
 EOF
 exit 0
 }

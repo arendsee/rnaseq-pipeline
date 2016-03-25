@@ -1,6 +1,8 @@
 #!/bin/bash
 set -u
 
+NCBI_DIR=$HOME/ncbi/sra
+
 usage (){
 cat << EOF
 Map reads of a single fastq file to a transcriptome creating a FPKM table
@@ -17,7 +19,7 @@ exit 0
 
 [[ $# -eq 0 ]] && usage
 
-clean= sracache=
+clean=
 while getopts "hcr:o:t:m:d:" opt; do
     case $opt in
         h)
@@ -32,8 +34,6 @@ while getopts "hcr:o:t:m:d:" opt; do
             outdir=$OPTARG ;;
         c)
             clean=1 ;;
-        d)
-            sracache=$OPTARG ;;
     esac 
 done
 
@@ -43,7 +43,7 @@ mkdir -p $outdir
 # build an index of the transcriptome for use by kallisto
 if [[ $transcriptome =~ fna$ ]]
 then
-    kallisto quant --index="$transcriptome"
+    kallisto index --index="$transcriptome"
     transcriptome=$(sed 's/\.fna$/.index/' <<< $transcriptome)
 fi
 
@@ -67,4 +67,4 @@ mv $kallisto_outdir/run_info.json $outdir/${runid}.json
 # clean up
 [[ $clean -eq 1 ]] && rm ${tmpdir}/${runid}*.fastq
 [[ $clean -eq 1 ]] && rm -rf $kallisto_outdir
-[[ $clean -eq 1 && -d "$sracache" ]] && rm -f "$sracache"/${runid}*
+[[ $clean -eq 1 && -d "$NCBI_HOME" ]] && rm -f "$NCBI_HOME"/${runid}*

@@ -9,7 +9,7 @@ REQUIRED ARGUMENTS
   -t transcriptome index or fasta (*.fna) file
   -m temporary output directory of huge files (e.g. fastq)
   -o directory of output of final data
-  -d the directory where fastq-dump caches downloaded files
+  -c the directory where fastq-dump caches downloaded files
 EOF
     exit 0
 }
@@ -21,7 +21,6 @@ transcriptome=
 sample_ids=
 tmpdir=.
 outdir=final-output
-sracache=$HOME/ncbi/public
 while getopts "ht:s:m:o:c:" opt; do
     case $opt in
         h)
@@ -34,8 +33,6 @@ while getopts "ht:s:m:o:c:" opt; do
             tmpdir=$OPTARG ;;
         o)
             outdir=$OPTARG ;;
-        c)
-            sracache=$OPTARG ;;
     esac 
 done
 
@@ -49,9 +46,12 @@ run-has-been-processed (){
     echo $?
 }
 
-echo -n "Retrieving run ids ... " >&2
-./1_get_runids.sh -i "$sample_ids" -s $outdir/samples > $runids
-printf "found %s ids\n\n" $(wc -l $runids) >&2
+if [[ ! -r $runids ]]
+then
+    echo -n "Retrieving run ids ... " >&2
+    ./1_get_runids.sh -i "$sample_ids" -s $outdir/samples > $runids
+    printf "found %s ids\n\n" $(wc -l $runids) >&2
+fi
 
 while read id
 do
@@ -72,7 +72,6 @@ do
                 -t $transcriptome \
                 -m $tmpdir \
                 -o $outdir \
-                -d $sracache \
                 -c
             echo >&2
         fi

@@ -1,0 +1,50 @@
+import os
+
+# Required inputs
+SPECIES    = "yeast"
+TRANSCRIPT = "%s.fa"             % SPECIES
+SAM_IDS    = "%s-sample-ids.txt" % SPECIES
+NCBI_DIR   = os.path.expanduser("~/ncbi/public/sra")
+
+# Optional inputs
+THREADS = 8    # number of threads to use with Kallisto
+KMER_SIZE = 31 # Kallisto default
+
+
+# Derived values
+INDEX  = "%s.index"        % SPECIES
+RUNIDS = "%s-runids.txt"   % SPECIES
+OUTDIR = "%s-final-output" % SPECIES
+TMPDIR = "%s/%s-tmp"       % (DUMP, SPECIES)
+
+SAMPLE_XML_DIR = "%s/sample-xml" %s OUTDIR
+
+rule runKallisto:
+    input:
+        INDEX,
+        RUNIDS
+    output:
+        "%s/samples/{runid}.xml" % OUTDIR
+    threads:
+        THREADS
+    shell:
+        "mkdir -p {OUTDIR}"
+
+rule buildIndex:
+    input:
+        TRANSCRIPT
+    output:
+        INDEX
+    shell:
+        "kallisto index --index={TRANSCRIPT} --kmer-size={KMER_SIZE}"
+
+rule getRunids:
+    input:
+        SAM_IDS
+    output:
+        RUN_IDS
+    shell:
+        "1_get_runids.sh -i {input} -s {SAMPLE_XML_DIR} > {output}"
+
+rule retrieveSRA:
+    input:
