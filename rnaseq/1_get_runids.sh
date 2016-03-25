@@ -19,10 +19,9 @@ while getopts "hi:s:" opt; do
         h)
             usage ;;
         i) 
-            id_file=$OPTARG
-            shift; shift ;;
+            id_file=$OPTARG ;;
         s)
-            sampledir=$OPTARG
+            sampledir=$OPTARG ;;
     esac 
 done
 

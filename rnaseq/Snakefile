@@ -1,50 +1,89 @@
 import os
 
-# Required inputs
-SPECIES    = "yeast"
-TRANSCRIPT = "%s.fa"             % SPECIES
-SAM_IDS    = "%s-sample-ids.txt" % SPECIES
-NCBI_DIR   = os.path.expanduser("~/ncbi/public/sra")
-
-# Optional inputs
-THREADS = 8    # number of threads to use with Kallisto
-KMER_SIZE = 31 # Kallisto default
 
 
-# Derived values
-INDEX  = "%s.index"        % SPECIES
-RUNIDS = "%s-runids.txt"   % SPECIES
-OUTDIR = "%s-final-output" % SPECIES
-TMPDIR = "%s/%s-tmp"       % (DUMP, SPECIES)
+# # Required inputs
+# SPECIES    = "yeast"
+# TRANSCRIPT = SPECIES + ".fa"
+# NCBI_DIR   = os.path.expanduser("~/ncbi/public/sra")
+# RUNIDS     = "runids.txt"
+# TMPDIR     = "/db/sra/%s-tmp" % SPECIES
+#
+# SRA_FILES =[line.strip() + "sra" for line in open("runids.txt").readlines()]
+#
+#
+# # Optional inputs
+# THREADS = 8    # number of threads to use with Kallisto
+# KMER_SIZE = 31 # Kallisto default
+#
+#
+# # Derived values
+# INDEX   = SPECIES + ".index"
+# OUTDIR  = SPECIES + "-final-output"
+#
+# SAMPLE_XML_DIR = OUTDIR + "/sample-xml"
+#
+#         #"{runid}_{group}.fastq"
+#
+# rule all:
+#     input:
+#         "%s/{runid}.sra" % NCBI_DIR,
+#         INDEX
+#     shell:
+#         "date > {NCBI_DIR}/{runid}.sra"
+#
+# rule retrieveSRA:
+#     input:
+#         RUN_IDS
+#     output:
+#         "%s/{runid}.sra" % NCBI_DIR
+#     shell:
+#         "while read r; do touch {NCBI_DIR}/$r.sra; done < {input}"
+#         
+# rule buildIndex:
+#     input:
+#         TRANSCRIPT
+#     output:
+#         INDEX
+#     shell:
+#         "kallisto index --index={INDEX} --kmer-size={KMER_SIZE} {TRANSCRIPT}"
+#
+# rule getRunids:
+#     input:
+#         OUTDIR,
+#         SAM_IDS
+#     output:
+#         RUN_IDS
+#     shell:
+#         "1_get_runids.sh -i {input} -s {SAMPLE_XML_DIR} > {output}"
+#
+# rule makeDirectories:
+#     output:
+#         OUTDIR,
+#         TMPDIR
+#     shell:
+#         "mkdir -p {OUTDIR} {TMPDIR}"
 
-SAMPLE_XML_DIR = "%s/sample-xml" %s OUTDIR
 
-rule runKallisto:
-    input:
-        INDEX,
-        RUNIDS
-    output:
-        "%s/samples/{runid}.xml" % OUTDIR
-    threads:
-        THREADS
-    shell:
-        "mkdir -p {OUTDIR}"
-
-rule buildIndex:
-    input:
-        TRANSCRIPT
-    output:
-        INDEX
-    shell:
-        "kallisto index --index={TRANSCRIPT} --kmer-size={KMER_SIZE}"
-
-rule getRunids:
-    input:
-        SAM_IDS
-    output:
-        RUN_IDS
-    shell:
-        "1_get_runids.sh -i {input} -s {SAMPLE_XML_DIR} > {output}"
-
-rule retrieveSRA:
-    input:
+# # Quantify expression of each run
+# rule runKallisto:
+#     input:
+#         INDEX,
+#         RUN_IDS
+#     output:
+#         OUTDIR + "/samples/{runid}.xml"
+#     threads:
+#         THREADS
+#     shell:
+#         "mkdir -p {OUTDIR}"
+#
+# rule retrieveSRA:
+#     input:
+#         RUN_IDS
+#     output:
+#         dynamic("{runid}.sra")
+#     run:
+#         with open {SAM_IDS} as f:
+#             runids = f.readlines()
+#             for r in runids:
+#                 print(r)
