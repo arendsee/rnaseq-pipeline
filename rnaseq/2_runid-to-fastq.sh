@@ -1,7 +1,7 @@
 #!/bin/bash
 set -u
 
-NCBI_DIR=$HOME/ncbi/sra
+NCBI_DIR=$HOME/ncbi/public/sra
 
 usage (){
 cat << EOF
@@ -18,6 +18,7 @@ exit 0
 
 [[ $# -eq 0 ]] && usage
 
+logfile=fastq.log
 while getopts "hr:o:" opt; do
     case $opt in
         h)
@@ -26,6 +27,8 @@ while getopts "hr:o:" opt; do
             runid=$OPTARG ;;
         o)
             outdir=$OPTARG ;;
+        d)
+            logfile=$OPTARG ;;
     esac 
 done
 
@@ -60,6 +63,7 @@ fastq-dump             \
     --clip             \
     --qual-filter-1    \
     --outdir "$outdir" \
-    $NCBI_DIR/${runid}.sra
+    -vvv               \
+    $NCBI_DIR/${runid}.sra 2>> $logfile
 
 rm -f $NCBI_DIR/${runid}.*

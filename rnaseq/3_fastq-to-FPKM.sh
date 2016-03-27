@@ -1,7 +1,7 @@
 #!/bin/bash
 set -u
 
-NCBI_DIR=$HOME/ncbi/sra
+NCBI_DIR=$HOME/ncbi/public/sra
 
 usage (){
 cat << EOF

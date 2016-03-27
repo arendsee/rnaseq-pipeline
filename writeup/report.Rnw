@@ -94,6 +94,17 @@ Here is a nice review \cite{conesa_survey_2016}.
 The 'S' can be replaced with 'E' or 'D', e.g. SRA, ERA, DRA. 'S' indicates the
 entry is from NCBI, E from EBI, and D from DDBJ.
 
+\section{Resources}
+\label{sec:resources}
+
+The memory required in fastq is about equal to 4 times the number of bases.
+
+In Arabidopsis, there are 30T bases, or 120 Tb of fastq data.
+
+The largest number of bases per entry in Arabidopsis is 50.
+
+5.9gb fastq against yeast in 22s
+
 \FloatBarrier
 \bibliographystyle{plain}
 \bibliography{report}
