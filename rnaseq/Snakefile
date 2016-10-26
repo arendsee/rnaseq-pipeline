@@ -2,52 +2,49 @@ import os
 
 
 
-# # Required inputs
-# SPECIES    = "yeast"
-# TRANSCRIPT = SPECIES + ".fa"
-# NCBI_DIR   = os.path.expanduser("~/ncbi/public/sra")
-# RUNIDS     = "runids.txt"
-# TMPDIR     = "/db/sra/%s-tmp" % SPECIES
-#
-# SRA_FILES =[line.strip() + "sra" for line in open("runids.txt").readlines()]
-#
-#
-# # Optional inputs
-# THREADS = 8    # number of threads to use with Kallisto
-# KMER_SIZE = 31 # Kallisto default
-#
-#
-# # Derived values
-# INDEX   = SPECIES + ".index"
-# OUTDIR  = SPECIES + "-final-output"
-#
-# SAMPLE_XML_DIR = OUTDIR + "/sample-xml"
-#
-#         #"{runid}_{group}.fastq"
-#
-# rule all:
-#     input:
-#         "%s/{runid}.sra" % NCBI_DIR,
-#         INDEX
-#     shell:
-#         "date > {NCBI_DIR}/{runid}.sra"
-#
-# rule retrieveSRA:
-#     input:
-#         RUN_IDS
-#     output:
-#         "%s/{runid}.sra" % NCBI_DIR
-#     shell:
-#         "while read r; do touch {NCBI_DIR}/$r.sra; done < {input}"
-#         
-# rule buildIndex:
-#     input:
-#         TRANSCRIPT
-#     output:
-#         INDEX
-#     shell:
-#         "kallisto index --index={INDEX} --kmer-size={KMER_SIZE} {TRANSCRIPT}"
-#
+# Required inputs
+SPECIES    = "yeast"
+TRANSCRIPT = SPECIES + ".fa"
+NCBI_DIR   = os.path.expanduser("~/ncbi/public/sra")
+TMPDIR     = "/db/sra/%s-tmp" % SPECIES
+
+RUNIDS = [s.strip() for s in open("runids.txt").readlines()]
+SRA_FILES = ["%s/%s.sra" % (NCBI_DIR, s) for s in RUNIDS]
+
+
+# Optional inputs
+THREADS = 8    # number of threads to use with Kallisto
+KMER_SIZE = 31 # Kallisto default
+
+
+# Derived values
+INDEX   = SPECIES + ".index"
+OUTDIR  = SPECIES + "-final-output"
+
+SAMPLE_XML_DIR = OUTDIR + "/sample-xml"
+
+rule all:
+    input:
+        SRA_FILES,
+        INDEX
+
+rule unpackSRA:
+    output:
+
+rule retrieveSRA:
+    output:
+        SRA_FILES
+    shell:
+        "for r in {RUNIDS}; do touch {NCBI_DIR}/${{r}}.sra; done"
+
+rule buildIndex:
+    input:
+        TRANSCRIPT
+    output:
+        INDEX
+    shell:
+        "kallisto index --index={INDEX} --kmer-size={KMER_SIZE} {TRANSCRIPT}"
+
 # rule getRunids:
 #     input:
 #         OUTDIR,
@@ -63,8 +60,8 @@ import os
 #         TMPDIR
 #     shell:
 #         "mkdir -p {OUTDIR} {TMPDIR}"
-
-
+#
+#
 # # Quantify expression of each run
 # rule runKallisto:
 #     input:

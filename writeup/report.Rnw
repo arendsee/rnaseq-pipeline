@@ -101,6 +101,13 @@ The memory required in fastq is about equal to 4 times the number of bases.
 
 In Arabidopsis, there are 30T bases, or 120 Tb of fastq data.
 
+In yeast, there are 4.7
+
+4050 97082164504 8837 111 043 572
+
+50B spots, 4T bases
+4054 48973262859 3,715,407,919,425
+
 The largest number of bases per entry in Arabidopsis is 50.
 
 5.9gb fastq against yeast in 22s

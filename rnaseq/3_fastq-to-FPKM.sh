@@ -67,4 +67,4 @@ mv $kallisto_outdir/run_info.json $outdir/${runid}.json
 # clean up
 [[ $clean -eq 1 ]] && rm ${tmpdir}/${runid}*.fastq
 [[ $clean -eq 1 ]] && rm -rf $kallisto_outdir
-[[ $clean -eq 1 && -d "$NCBI_HOME" ]] && rm -f "$NCBI_HOME"/${runid}*
+[[ $clean -eq 1 && -d "$NCBI_DIR" ]] && rm -f "$NCBI_DIR"/${runid}*

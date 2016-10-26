@@ -55,7 +55,7 @@ prefetch             \
 # skip-technical - skip technical reads (not useable by Kallisto, also is
 #                  specific to Illumina multiplexing library construction
 #                  protocol)
-fastq-dump             \
+time fastq-dump        \
     --readids          \
     --split-files      \
     --dumpbase         \
@@ -63,7 +63,6 @@ fastq-dump             \
     --clip             \
     --qual-filter-1    \
     --outdir "$outdir" \
-    -vvv               \
-    $NCBI_DIR/${runid}.sra 2>> $logfile
+    $NCBI_DIR/${runid}.sra 2>&1 >> $logfile
 
 rm -f $NCBI_DIR/${runid}.*
