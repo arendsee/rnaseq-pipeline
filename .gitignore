@@ -1,11 +1,8 @@
 data/
-SCRATCH/
 
 log
 
 *.fna
-*yeast*
-*rabidopsis*
 
 *.tab
 *.fastq
@@ -14,12 +11,3 @@ log
 rnaseq/samples
 rnaseq/final-output
 rnaseq/*-bootstrap
-
-*.aux
-*.bbl
-*.blg
-*.fls
-*.log
-*.out
-*.pdf
-*.fdb_latexmk
