@@ -1,0 +1,88 @@
+@source sh
+
+eusrc() {
+    db=$1
+    term=$2
+    retmax=${3-1000}
+    src_url="http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
+    url="$src_url?db=$db&term=$term&retmax=$retmax&usehistory=y"
+    out=$(wget -qO /dev/stdout $url | 
+          xmlstarlet sel --template      \
+            --match '/eSearchResult'     \
+                --value-of 'WebEnv' --nl \
+                --value-of 'QueryKey'    \
+            --break 2> /dev/null)
+    webenv=$(echo $out | awk '{print $1}')
+    query_key=$(echo $out | awk '{print $2}')
+    printf "db=%s&WebEnv=%s 1 %s %s" $db $webenv $query_key $retmax
+}
+
+eufet() {
+    read opts first_key nkeys retmax
+    base="http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
+    for k in `seq $first_key $nkeys`; do
+        loopopts="retmax=$retmax&query_key=$k"
+        cmd="$base?$opts&$loopopts"
+        wget -qO /dev/stdout "$cmd"
+    done
+}
+
+print-id (){
+    sleep 1 # so they don't block my ip address
+    eusrc sra $1 | eufet |
+        xmlstarlet fo | tee $sampledir/${1}.xml |
+        xmlstarlet sel --template \
+            --match 'EXPERIMENT_PACKAGE_SET/EXPERIMENT_PACKAGE/RUN_SET/RUN/IDENTIFIERS' \
+                --value-of 'PRIMARY_ID' --nl \
+            --break
+}
+
+_fastq-dump (){
+    fastq-dump "$@"
+}
+
+kallist_index (){
+    kallisto index --index=$1
+    echo $(sed 's/\.fna$/.index/' <<< $1)
+}
+
+@path
+
+main . &( null . kallisto . $2 $4 _fastq-dump:get . prefetch $3 . $1 $5 ) .
+    "samples.txt"           # $1 sample ids
+    kallisto_index          # $2 transcriptome
+    "tmp"                   # $3 temporary directory
+    "out"                   # $4 output directory
+    "$HOME/ncbi/public/sra" # $5 NCBI home directory
+
+
+
+@arg
+kallisto:quant ::
+    quant
+    --index="$transcriptome"
+    --bootstrap-samples=100
+    --output-dir="$3/$2-bootstrap"
+    --threads=8
+
+prefetch ::
+    --max-size "100G"
+    --transport ascp
+    --ascp-path "/opt/aspera/bin/ascp|/opt/aspera/etc/asperaweb_id_dsa.openssh"
+
+kallisto_index :: "yeast.fna"
+
+fastq-dump:get ::
+    --readids
+    --split-files
+    --dumpbase
+    --skip-technical
+    --clip
+    --qual-filter-1
+    --outdir "$outdir"
+
+@check
+kallisto_index :: file_readable . "$1"
+
+@lang
+* :: sh
