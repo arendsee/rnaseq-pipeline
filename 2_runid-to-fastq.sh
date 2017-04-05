@@ -1,6 +1,8 @@
 #!/bin/bash
 set -u
 
+source util.sh
+
 NCBI_DIR=$HOME/ncbi/public/sra
 
 usage (){
@@ -9,6 +11,7 @@ Download the fastq entry for a single run id
 Required Arguments
   -r A single run id (e.g. SRR123456)
   -o output directory for fastq files
+  -d log file (default: fastq.loc)
 Note: *.sra files are first downloaded into the \$HOME/ncbi/public/sra
 direcotry. The fastq files are then extracted, and then the *.sra files are
 deleted (to conserve space).
@@ -19,7 +22,7 @@ exit 0
 [[ $# -eq 0 ]] && usage
 
 logfile=fastq.log
-while getopts "hr:o:" opt; do
+while getopts "hr:o:d:" opt; do
     case $opt in
         h)
             usage ;;
@@ -32,7 +35,6 @@ while getopts "hr:o:" opt; do
     esac 
 done
 
-
 # Check whether the experiment was paired-end
 if [[ $(fastq-dump -X 1 -Z --split-files $runid 2> /dev/null | wc -l) -eq 4 ]]
 then
@@ -40,21 +42,23 @@ then
     exit 1
 fi
 
+
 # Load sra archive into ncbi/public/sra folder
 prefetch             \
     --max-size 100G  \
     --transport ascp \
     --ascp-path "/opt/aspera/bin/ascp|/opt/aspera/etc/asperaweb_id_dsa.openssh" \
     $runid
+die_on_failure $? "prefetch command for $runid failed, skipping"
 
 # Options descriptions
-# split-files    - split paired-end data into files suffixed with _1 and _2
+# split-files    - split paired-ends into files suffixed with _1 and _2
 # readids        - append read id (.1, .2) after spot id
-# dumpbase       - output as ACGT bases rather than color-base (e.g. from SOLiD)
+# dumpbase       - output as ACGT rather than color-base (e.g. SOLiD)
 # clip           - remove left and right tags
-# skip-technical - skip technical reads (not useable by Kallisto, also is
-#                  specific to Illumina multiplexing library construction
-#                  protocol)
+# skip-technical - skip technical reads (not useable by Kallisto, also
+#                  is specific to Illumina multiplexing library
+#                  construction protocol)
 time fastq-dump        \
     --readids          \
     --split-files      \
@@ -64,5 +68,8 @@ time fastq-dump        \
     --qual-filter-1    \
     --outdir "$outdir" \
     $NCBI_DIR/${runid}.sra 2>&1 >> $logfile
+die_on_failure $? "fastq-dump of $runid failed, skipping"
 
 rm -f $NCBI_DIR/${runid}.*
+
+exit 0

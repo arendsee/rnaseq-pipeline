@@ -56,15 +56,18 @@ kallisto quant                      \
     --output-dir="$kallisto_outdir" \
     --threads=8                     \
     ${tmpdir}/${runid}_*
-
-
-# move results and run details into results folder
-mv $kallisto_outdir/abundance.tsv $outdir/${runid}.tsv
-mv $kallisto_outdir/abundance.h5 $outdir/${runid}.h5
-mv $kallisto_outdir/run_info.json $outdir/${runid}.json
-
+stat=$?
+if [[ $stat -eq 0 ]]
+then
+    # move results and run details into results folder
+    mv $kallisto_outdir/abundance.tsv $outdir/${runid}.tsv
+    mv $kallisto_outdir/abundance.h5 $outdir/${runid}.h5
+    mv $kallisto_outdir/run_info.json $outdir/${runid}.json
+fi
 
 # clean up
 [[ $clean -eq 1 ]] && rm ${tmpdir}/${runid}*.fastq
 [[ $clean -eq 1 ]] && rm -rf $kallisto_outdir
 [[ $clean -eq 1 && -d "$NCBI_DIR" ]] && rm -f "$NCBI_DIR"/${runid}*
+
+exit $stat

@@ -1,6 +1,8 @@
 #!/bin/bash
 set -u
 
+source util.sh
+
 usage (){
 cat <<EOF
 Extract FPKM results for a given set of sample ids
@@ -16,6 +18,17 @@ EOF
 
 # print help with no arguments
 [[ $# -eq 0 ]] && usage
+
+stat=0
+for cmd in kallisto xmlstarlet wget
+do
+    if ! type $cmd
+    then
+        echo "'$cmd' not found in path" >&2
+        stat=1
+    fi
+done
+die_on_failure $stat "Missing required commands ... exiting"
 
 transcriptome=
 sample_ids=
@@ -62,18 +75,17 @@ do
     else
         echo "   retrieving fastq file" >&2
         time ./2_runid-to-fastq.sh \
-            -r $id \
+            -r $id                 \
             -o "$tmpdir"
-        if [[ $? -eq 0 ]]
-        then
-            echo "   aligning to index" >&2
-            time ./3_fastq-to-FPKM.sh \
-                -r $id \
-                -t $transcriptome \
-                -m $tmpdir \
-                -o $outdir \
-                -c
-            echo >&2
-        fi
+        die_on_failure $? "   failed to retrieve fastq file ... exiting"
+        echo "   aligning to index" >&2
+        time ./3_fastq-to-FPKM.sh \
+            -r $id                \
+            -t $transcriptome     \
+            -m $tmpdir            \
+            -o $outdir            \
+            -c
+        die_on_failure $? "   failed to convert fastq to FPKM ... exiting"
+        echo >&2
     fi
 done < $runids
